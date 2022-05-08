@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Getemails Coding Task
+
+Resources:
+  SAMApiGatewayCodingChallenge:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: Basic AWS Api Gateway
+      StageName: Staging
+
+  forgetPasswordPython3:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.forgot_password_handler
+      Runtime: python3.6
+      CodeUri: src/
+      Description: A forget password lambda handler
+      MemorySize: 128
+      Timeout: 3
+      Events:
+        ForgetPasswordAPI:
+          Type: Api 
+          Properties:
+            RestApiId: !Ref SAMApiGatewayCodingChallenge
+            Path: /forgetpassword
+            Method: POST
