@@ -1,23 +1,8 @@
-import json
 import time
 import jwt
 
-def make_response_obj(body):
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Content-Type": "application/json"
-        },
-        "body": json.dumps({
-            "response ": body
-        })
-    }
-
-def get_user_information(email):
-    mock_db = [{'email': 'rishi', 'password': '123', 'id': 1}, {'email': 'jung', 'password': '456', 'id': 2}]
-    for i in mock_db:
-        if i['email'] == email:
-            return i
+from utils import get_user_information
+from utils import make_response_obj
 
 def forgot_password_handler(message, context):
     # forget password handler ...
@@ -26,7 +11,6 @@ def forgot_password_handler(message, context):
     # get timestamp and email address from header
     req_timestamp_epoch = time.time()
     user_email = message.get('email', 'rishi')
-    
     
     # get user info for the email address from RDS
     # TODO: setup RDS and seed some user data
@@ -42,5 +26,3 @@ def forgot_password_handler(message, context):
     encoded_token = jwt.encode(payload, secret, algorithm="HS256")
     
     return make_response_obj(f"Email send password reset link. token: {encoded_token}")
-
-print(forgot_password_handler({'email': 'rishi'}, None))

@@ -12,8 +12,8 @@ Resources:
   forgetPasswordPython3:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.forgot_password_handler
-      Runtime: python3.6
+      Handler: forget_password.forgot_password_handler
+      Runtime: python3.8
       CodeUri: src/
       Description: A forget password lambda handler
       MemorySize: 128
