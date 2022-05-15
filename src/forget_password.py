@@ -21,8 +21,10 @@ def forgot_password_handler(message, context):
     
     # user password makes this a one-time-use token by adding current user password as one of secret key
     # request timestamp makes JWT generate unique token when same user makes request multiple times
-    secret = f"{user['password']}-{req_timestamp_epoch}" 
+    secret = f"{user['password_hash']}-{req_timestamp_epoch}" 
     
     encoded_token = jwt.encode(payload, secret, algorithm="HS256")
     
     return make_response_obj(f"Email send password reset link. token: {encoded_token}")
+
+print(forgot_password_handler({"email": "ranabhat.85@gmail.com"}, None))

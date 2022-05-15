@@ -1,4 +1,5 @@
 import json
+import connection_manager 
 
 def make_response_obj(body):
     return {
@@ -12,7 +13,10 @@ def make_response_obj(body):
     }
 
 def get_user_information(email):
-    mock_db = [{'email': 'rishi', 'password': '123', 'id': 1}, {'email': 'jung', 'password': '456', 'id': 2}]
-    for i in mock_db:
-        if i['email'] == email:
-            return i
+    print('fetching user information ...')
+    query = f'''select * from public.users where email = '{email}\''''
+    data = connection_manager.fetch_data(query)
+    print(data)
+    if data:
+        return data[0]
+    return []
