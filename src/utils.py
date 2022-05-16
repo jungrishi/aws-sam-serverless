@@ -1,5 +1,8 @@
 import json
 
+class JWTException(Exception):
+    pass
+
 def make_response_obj(body, status_code=200):
     return {
         "statusCode": status_code,
