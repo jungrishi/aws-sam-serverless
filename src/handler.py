@@ -4,7 +4,7 @@ from forget_password import forgot_password_handler
 from reset_password import password_reset_view_handler
 
 def lambda_handler(event, context):
-    route = event["resource"]
+    route = event["path"]
     http_method = event["httpMethod"]
     
     # route handler
