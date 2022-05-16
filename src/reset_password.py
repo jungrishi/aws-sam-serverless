@@ -1,14 +1,14 @@
 import jwt
 
-from utils import get_user_by_id, make_response_obj
+from db_models import get_user_by_id
+from utils import make_response_obj
 
 def password_reset_view_handler(event, context):
     print("Reset password lambda handler ...")
 
     token = event['pathParameters']['token']
-    user_id = event['pathParameters']['id']
+    user_id = event['pathParameters']['user_id']
     
-    # get user info for the email address from RDS
     # TODO: setup RDS and seed some user data
     user = get_user_by_id(user_id)
 

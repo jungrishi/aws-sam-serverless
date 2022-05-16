@@ -9,36 +9,32 @@ Resources:
       Name: Basic AWS Api Gateway
       StageName: Staging
 
-  forgetPasswordPython3:
+  LambdaHandler:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: forget_password.forgot_password_handler
+      Handler: handler.lambda_handler
       Runtime: python3.8
-      CodeUri: src/forget_password
-      Description: A forget password lambda handler
+      CodeUri: src
+      Description: Build api for forget password and recover
       MemorySize: 128
       Timeout: 3
       Events:
-        ForgetPasswordAPI:
+        ProxyApiRoot:
           Type: Api 
           Properties:
             RestApiId: !Ref SAMApiGatewayCodingChallenge
-            Path: /forgetpassword
-            Method: POST
-
-  ResetPasswordHTML:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: reset_password.password_reset_view_handler
-      Runtime: python3.8
-      CodeUri: src/reset_password
-      Description: A reset password html view host
-      MemorySize: 128
-      Timeout: 3
-      Events:
-        ForgetPasswordAPI:
+            Path: /
+            Method: ANY
+        ResetPasswordPathApi:
           Type: Api 
           Properties:
             RestApiId: !Ref SAMApiGatewayCodingChallenge
-            Path: /recoverpassword/{id}/{token}
+            Path: /reset_password/{user_id}/{token}
             Method: GET
+        ProxyApiGreedy:
+          Type: Api 
+          Properties:
+            RestApiId: !Ref SAMApiGatewayCodingChallenge
+            Path: /{proxy+}
+            Method: ANY
+

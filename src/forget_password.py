@@ -1,9 +1,8 @@
+import jwt
 from datetime import datetime, timezone, timedelta
 
-import jwt
-
 from utils import make_response_obj
-from utils import get_user_by_email
+from db_models import get_user_by_email
 
 def forgot_password_handler(event, context):
     # forget password handler ...
@@ -14,11 +13,11 @@ def forgot_password_handler(event, context):
     
     query_params = event["queryStringParameters"]
     user_email = query_params.get('email', None)
-    domain_url = context['domainName']
+    domain_url = event['requestContext']['domainPrefix']
+
     if not user_email:
         return make_response_obj("email not found", 400)
     
-    # get user info for the email address from RDS
     # TODO: setup RDS and seed some user data
     user = get_user_by_email(user_email)
 
@@ -39,5 +38,3 @@ def forgot_password_handler(event, context):
     # send token to the email server
     # save token_created_at
     return make_response_obj(f"Email send password reset link. token: {reset_link}")
-
-# print(forgot_password_handler({"queryStringParameters": {"email": "ranabhat.85@gmail.com"}}, {'domainName': "localhost"}))
