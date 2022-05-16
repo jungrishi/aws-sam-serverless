@@ -13,7 +13,8 @@ def create_required_tables():
                 created_at timestamp default now() not null,
                 updated_at timestamp default now() not null,
                 username               varchar(255),
-                password_hash          varchar(255)
+                password_hash          varchar(255),
+                reset_link_timestamp   numeric,
             );
 
     create index users_id_index

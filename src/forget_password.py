@@ -2,7 +2,7 @@ import jwt
 from datetime import datetime, timezone, timedelta
 
 from utils import make_response_obj
-from db_models import get_user_by_email
+from db_models import get_user_by_email, update_user_reset_time
 
 def forgot_password_handler(event, context):
     # forget password handler ...
@@ -37,4 +37,5 @@ def forgot_password_handler(event, context):
 
     # send token to the email server
     # save token_created_at
+    update_user_reset_time(user['id'], epoch_timestamp_now)
     return make_response_obj(f"Email send password reset link. token: {reset_link}")
