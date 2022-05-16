@@ -19,7 +19,6 @@ def get_connection():
         port=db_config["port"],
     )
 
-
 def fetch_data(query):
     # Note: connection pool
     connection = get_connection()
@@ -33,7 +32,6 @@ def fetch_data(query):
     except Exception as error:
         print(error)
         return []
-
 
 def to_dict(result):
     """Returns a list
