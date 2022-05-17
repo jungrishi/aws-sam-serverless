@@ -2,7 +2,146 @@ AWSTemplateFormatVersion : '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Getemails Coding Task
 
+Parameters:
+  DBClusterName:
+    Description: "RDS cluster name"
+    Type: String
+    Default: rdsclustertest
+  DatabaseName:
+    Description: "RDS database name"
+    Type: String
+    Default: ge_coding_task
+  DBMasterUserName:
+    Description: The database admin account user name.
+    Type: String
+    Default: rishi
+  DBPassword: # get this from the secrest manager
+    Description: The database password.
+    Type: String
+    Default: password
+
 Resources:
+  GetEmailsVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+        CidrBlock: 172.31.0.0/16
+        EnableDnsSupport: 'true'
+        EnableDnsHostnames: 'true'
+        Tags:
+        - Key: Name
+          Value: GetEmailsVPC
+
+  privateDBSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref GetEmailsVPC
+      CidrBlock: 172.31.0.0/20
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs 
+          Ref: 'AWS::Region'
+      Tags:
+        - Key: Name
+          Value: privateDBSubnet1
+
+  privateDBSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref GetEmailsVPC
+      CidrBlock: 172.31.16.0/20
+      AvailabilityZone: !Select 
+        - 1
+        - !GetAZs 
+          Ref: 'AWS::Region'
+      Tags:
+      - Key: Name
+        Value: privateDBSubnet2
+
+  DBSubnetGroup: 
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties: 
+      DBSubnetGroupDescription: "Db subnet groups for RDS instance"
+      SubnetIds: 
+        - !Ref privateDBSubnet1
+        - !Ref privateDBSubnet2
+      Tags: 
+        - 
+          Key: "Name"
+          Value: "DBSubnetGroup"
+
+  privateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref GetEmailsVPC
+
+  privateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref privateDBSubnet1
+      RouteTableId: !Ref privateRouteTable
+
+  privateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref privateDBSubnet2
+      RouteTableId: !Ref privateRouteTable
+
+  RDSCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      DBClusterIdentifier: !Ref DBClusterName
+      MasterUsername: !Ref DBMasterUserName
+      MasterUserPassword: !Ref DBPassword
+      DatabaseName: !Ref DatabaseName
+      Engine: aurora-postgresql
+      EngineMode: serverless
+      EngineVersion: '10' # currently provisions '10.serverless_14' 10.14
+      EnableHttpEndpoint: true
+      ScalingConfiguration:
+        AutoPause: true
+        MaxCapacity: 2
+        MinCapacity: 2
+        SecondsUntilAutoPause: 300 # 5 min
+      DBSubnetGroupName:
+        Ref: DBSubnetGroup
+      VpcSecurityGroupIds:
+        - !Ref RDSSG
+
+  # SGs
+  lambdaOutboundSGToRDS: # Outbound access for lambda to access Postgres DB
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: GetEmailsVPC
+    Properties:
+      GroupDescription: getemails access to PG DB
+      GroupName: getemails lambda to PG access
+      VpcId: !Ref GetEmailsVPC
+      SecurityGroupEgress: 
+        - CidrIp: '0.0.0.0/0'
+          Description: lambda to PG access over 5432
+          FromPort: 5432
+          IpProtocol: TCP
+          ToPort: 5432
+
+  RDSSG:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: GetEmailsVPC
+    Properties:
+      GroupDescription: getemails RDS ingress and egress
+      SecurityGroupEgress: 
+        -
+          CidrIp: '0.0.0.0/0'
+          Description: lambda RDS access over 5432
+          FromPort: 5432
+          IpProtocol: TCP
+          ToPort: 5432
+      SecurityGroupIngress: 
+        -
+          SourceSecurityGroupId: !Ref lambdaOutboundSGToRDS # ingress SG for lambda to access RDS
+          Description: lambda to PG access over 5432
+          FromPort: 5432
+          IpProtocol: TCP
+          ToPort: 5432
+      VpcId: !Ref GetEmailsVPC
 
   PythonLayer:
     Type: AWS::Serverless::LayerVersion
@@ -30,6 +169,18 @@ Resources:
       Timeout: 30
       Layers: 
         - !Ref PythonLayer
+      VpcConfig:
+        SubnetIds: 
+          - !Ref privateDBSubnet1
+          - !Ref privateDBSubnet2
+        SecurityGroupIds: [!Ref lambdaOutboundSGToRDS]
+      Environment:
+        Variables:
+          DBNAME: !Ref DatabaseName
+          DBUSERNAME: !Ref DBMasterUserName
+          DBENDPOINT: !GetAtt RDSCluster.Endpoint.Address
+          DBPASSWORD: !Ref DBPassword
+          DBPORT: 5432
       Events:
         ProxyApiRoot:
           Type: Api 

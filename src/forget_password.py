@@ -4,6 +4,7 @@ from jwt_utils import jwt_generate_token
 from utils import make_response_obj
 from db_models import get_user_by_email, update_user_reset_time
 
+DOMIAN_URL = "https://www.getemails.io"
 def forgot_password_handler(event, context):
     # forget password handler ...
     print("Executing forget password lambda handler ...")
@@ -13,7 +14,6 @@ def forgot_password_handler(event, context):
     
     query_params = event["queryStringParameters"]
     user_email = query_params.get('email', None)
-    domain_url = "getemail"
 
     if not user_email:
         return make_response_obj("email not found", 400)
@@ -36,8 +36,10 @@ def forgot_password_handler(event, context):
     if not encoded_token:
         return make_response_obj("cannot generate reset link", 500)
 
-    reset_link = f"{domain_url}/resetpassword/{user['id']}/{encoded_token}"
+    reset_link = f"{DOMIAN_URL}/resetpassword/{user['id']}/{encoded_token}"
 
+    # send email
+    
     update_user_reset_time(user['id'], epoch_timestamp_now)
     return make_response_obj(f"Email send password reset link. token: {reset_link}")
 

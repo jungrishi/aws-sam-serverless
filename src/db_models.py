@@ -18,9 +18,9 @@ def get_user_by_id(id: int) -> List[dict]:
     return []
 
 def update_user_reset_time(user_id: int, epoch_time: int) -> bool:
-    query = f'''update users set reset_link_timestamp = %s where user_id = %s;'''
+    query = f'''update users set reset_link_timestamp = %s where id = %s;'''
     return insert_data(query, (epoch_time, user_id))
 
 def update_user_password(user_id: int, password_hash: int) -> bool:
-    query = f'''update users set password_hash = %s where user_id = %s;'''
+    query = f'''update users set password_hash = %s where id = %s;'''
     return insert_data(query, (password_hash, user_id))

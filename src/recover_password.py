@@ -23,6 +23,7 @@ def recover_password_handler(event, context):
     try:
         jwt_decode_token(token, secret)
         update_user_password(user_id, new_password_hash)
+        return make_response_obj("Successful password reset")
     except JWTException as err:
         return make_response_obj(str(err))
     except Exception as err:

@@ -25,7 +25,7 @@ def jwt_generate_token(payload: dict, secret: str) -> str:
     Generates a unique token for the given payload and secret
     """
     try:
-        return jwt.encode(payload, secret, algorithms=ALGORITHM)
+        return jwt.encode(payload, secret, algorithm=ALGORITHM)
     except Exception as err:
         print(err)
         return None
