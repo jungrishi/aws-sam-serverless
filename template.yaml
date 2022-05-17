@@ -3,6 +3,16 @@ Transform: AWS::Serverless-2016-10-31
 Description: Getemails Coding Task
 
 Resources:
+
+  PythonLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      CompatibleRuntimes:
+        - python3.8
+      ContentUri: src/layer
+      Description: Provides the base backend shared library and dependencies
+      LayerName: python-layer
+
   SAMApiGatewayCodingChallenge:
     Type: AWS::Serverless::Api
     Properties:
@@ -17,7 +27,9 @@ Resources:
       CodeUri: src
       Description: Build api for forget password and recover
       MemorySize: 128
-      Timeout: 3
+      Timeout: 30
+      Layers: 
+        - !Ref PythonLayer
       Events:
         ProxyApiRoot:
           Type: Api 
@@ -37,4 +49,3 @@ Resources:
             RestApiId: !Ref SAMApiGatewayCodingChallenge
             Path: /{proxy+}
             Method: ANY
-
