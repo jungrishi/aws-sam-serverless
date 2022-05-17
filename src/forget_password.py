@@ -13,7 +13,7 @@ def forgot_password_handler(event, context):
     
     query_params = event["queryStringParameters"]
     user_email = query_params.get('email', None)
-    domain_url = event['requestContext']['domainPrefix']
+    domain_url = "getemail"
 
     if not user_email:
         return make_response_obj("email not found", 400)
@@ -38,7 +38,7 @@ def forgot_password_handler(event, context):
 
     reset_link = f"{domain_url}/resetpassword/{user['id']}/{encoded_token}"
 
-    # send token to the email server
-    # save token_created_at
     update_user_reset_time(user['id'], epoch_timestamp_now)
     return make_response_obj(f"Email send password reset link. token: {reset_link}")
+
+# print(forgot_password_handler({}, {}))

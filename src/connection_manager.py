@@ -5,11 +5,11 @@ from psycopg2.extras import DictCursor
 
 #  TODO: get the config from the env
 db_config = {
-    "dbname": os.environ.get("DBNAME"),
-    "user": os.environ.get("DBUSER"),
-    "password": os.environ.get("DBPASSWORD"),
-    "host": os.environ.get("DBENDPOINT"),
-    "port": os.environ.get("DBPORT"),
+    "dbname": os.environ.get("DBNAME", "ge_coding_task"),
+    "user": os.environ.get("DBUSER", "rishi"),
+    "password": os.environ.get("DBPASSWORD", "password"),
+    "host": os.environ.get("DBENDPOINT", "127.0.0.1"),
+    "port": os.environ.get("DBPORT", 5432),
 }
 
 def get_connection():
