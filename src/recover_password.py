@@ -1,3 +1,5 @@
+import json
+
 from db_models import get_user_by_id, update_user_password
 from jwt_utils import jwt_decode_token
 from utils import JWTException, make_response_obj
@@ -5,9 +7,10 @@ from utils import JWTException, make_response_obj
 def recover_password_handler(event, context):
     print("Recover password lambda handler ...")
 
-    token = event['requestBody']['token']
-    user_id = event['requestBody']['user_id']
-    new_password_hash = event['requestBody']['passwordHash']
+    decoded_body = json.loads(event['body'])
+    token = decoded_body['token']
+    user_id = decoded_body['user_id']
+    new_password_hash = decoded_body['passwordHash']
     
     # TODO: setup RDS and seed some user data
     user = get_user_by_id(user_id)
