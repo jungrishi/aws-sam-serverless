@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion : '2010-09-09'
+AWSTemplateFormatVersion : 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: Getemails Coding Task
 
@@ -95,7 +95,7 @@ Resources:
       DatabaseName: !Ref DatabaseName
       Engine: aurora-postgresql
       EngineMode: serverless
-      EngineVersion: '10' # currently provisions '10.serverless_14' 10.14
+      EngineVersion: '10'
       EnableHttpEndpoint: true
       ScalingConfiguration:
         AutoPause: true
@@ -157,6 +157,8 @@ Resources:
     Properties:
       Name: Basic AWS Api Gateway
       StageName: Staging
+      Domain:
+        DomainName: www.getemails.io
 
   LambdaHandler:
     Type: AWS::Serverless::Function
