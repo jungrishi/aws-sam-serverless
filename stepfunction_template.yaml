@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Getemails Step function Coding Task
+
+Resources:
+  StepFunctionPythonLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      CompatibleRuntimes:
+        - python3.8
+      ContentUri: step_function/layer
+      Description: Provides the base backend shared library and dependencies
+      LayerName: stepfunction-python-layer
+
+  StepFunctionSAMApiGatewayCodingChallenge:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: ge-automation-tools
+      StageName: test
+      BinaryMediaTypes:
+        - "multipart/form-data"
+
+  LambdaHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: csv_uploader.lambda_handler
+      Runtime: python3.8
+      CodeUri: step_function
+      Description: Build api for processing csv files
+      MemorySize: 128
+      Timeout: 30
+      Layers: 
+        - !Ref StepFunctionPythonLayer
+      Events:
+        CsvUploaderPathApi:
+          Type: Api 
+          Properties:
+            RestApiId: !Ref StepFunctionSAMApiGatewayCodingChallenge
+            Path: /csv-uploader
+            Method: POST
