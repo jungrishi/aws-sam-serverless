@@ -1,0 +1,102 @@
+{
+    "Comment": "A description of my state machine",
+    "StartAt": "Lambda Invoke",
+    "States": {
+      "Lambda Invoke": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "OutputPath": "$.math_random",
+        "Parameters": {
+          "Payload.$": "$"
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "Choice"
+      },
+      "Choice": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.math_random",
+            "NumericLessThan": 0.5,
+            "Next": "Wait"
+          },
+          {
+            "Variable": "$.math_random",
+            "NumericGreaterThanEquals": 0.5,
+            "Next": "API Gateway Invoke"
+          }
+        ]
+      },
+      "Wait": {
+        "Type": "Wait",
+        "Seconds": 1,
+        "Next": "Lambda Invoke",
+        "Comment": "system overload wait for 1 second"
+      },
+      "API Gateway Invoke": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::apigateway:invoke",
+        "Parameters": {
+          "ApiEndpoint": "MyApiId.execute-api.us-east-1.amazonaws.com",
+          "Method": "POST",
+          "Headers": {
+            "Header1": [
+              "HeaderValue1"
+            ],
+            "Header2": [
+              "HeaderValue2",
+              "HeaderValue3"
+            ]
+          },
+          "Stage": "MyStage",
+          "Path": "/pets/dog/1",
+          "QueryParameters": {
+            "QueryParameter1": [
+              "QueryParameterValue1"
+            ],
+            "QueryParameter2": [
+              "QueryParameterValue2",
+              "QueryParameterValue3"
+            ]
+          },
+          "RequestBody": {
+            "Payload": "Hello from Step Functions!"
+          },
+          "AuthType": "IAM_ROLE"
+        },
+        "Next": "Wait Lambda Invoke"
+      },
+      "Wait Lambda Invoke": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "OutputPath": "$.math_random",
+        "Parameters": {
+          "Payload.$": "$"
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "Lambda Invoke"
+      }
+    }
+  }

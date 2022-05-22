@@ -1,0 +1,7 @@
+{
+    "Template": {
+      "TemplateName": "PasswordResetLink",
+      "SubjectPart": "Greetings, {{name}}!",
+      "TextPart": "\r\nHi {{name}}, There was a request to change your password!\r\n If you did not make this request then please ignore this email.\r\n Otherwise, please click this link to change your password: \r\n{{link}}"
+    }
+  }

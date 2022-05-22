@@ -1,5 +1,7 @@
 from datetime import datetime, timezone, timedelta
+import json
 from jwt_utils import jwt_generate_token
+from email_utils import get_ses_client, send_email_via_ses
 
 from utils import make_response_obj
 from db_models import get_user_by_email, update_user_reset_time
@@ -39,7 +41,11 @@ def forgot_password_handler(event, context):
     reset_link = f"{DOMIAN_URL}/resetpassword/{user['id']}/{encoded_token}"
 
     # send email
-    
+    email_config = {
+        "to": user_email,
+        "from": "notification@getemails.io"
+    }
+    send_email_via_ses(get_ses_client(), email_config)
     update_user_reset_time(user['id'], epoch_timestamp_now)
     return make_response_obj(f"Email send password reset link. token: {reset_link}")
 
