@@ -8,7 +8,7 @@ Resources:
     Properties:
       CompatibleRuntimes:
         - python3.8
-      ContentUri: step_function/layer
+      ContentUri: step_function/functions/csv_uploader/layer
       Description: Provides the base backend shared library and dependencies
       LayerName: stepfunction-python-layer
 
@@ -25,7 +25,7 @@ Resources:
     Properties:
       Handler: csv_uploader.lambda_handler
       Runtime: python3.8
-      CodeUri: step_function
+      CodeUri: step_function/functions/csv_uploader
       Description: Build api for processing csv files
       MemorySize: 128
       Timeout: 30
@@ -38,3 +38,77 @@ Resources:
             RestApiId: !Ref StepFunctionSAMApiGatewayCodingChallenge
             Path: /csv-uploader
             Method: POST
+
+  StateMachineIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                  - Fn::Sub: "states.${AWS::Region}.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: StatesExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "lambda:InvokeFunction"
+                Resource:
+                  - !GetAtt TestFunction1.Arn
+                  - !GetAtt TestFunction2.Arn
+
+  StateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub "${AWS::StackName}-StateMachine"
+      RoleArn: !GetAtt StateMachineIAMRole.Arn
+      DefinitionUri: step_function/statemachine/my_state_machine.asl.json
+      DefinitionSubstitutions:
+        MyFunctionArn: !GetAtt MyFunction.Arn
+        MyDDBTable: !Ref TransactionTable
+        MyCsvProcessorAPI: !Ref
+
+ ScheduledEventIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                  - Fn::Sub: "events.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: StateMachineExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "states:StartExecution"
+                Resource:
+                  - !Ref StateMachine
+
+  ScheduledEventRule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: "Scheduled event to trigger Step Functions state machine every 5 minutes"
+      ScheduleExpression: rate(5 minute)
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref StateMachine
+          Id: !GetAtt StateMachine.Name
+          RoleArn: !GetAtt ScheduledEventIAMRole.Arn

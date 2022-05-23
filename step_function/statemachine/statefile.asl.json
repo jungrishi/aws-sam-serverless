@@ -1,8 +1,8 @@
 {
     "Comment": "A description of my state machine",
-    "StartAt": "Lambda Invoke",
+    "StartAt": "System Overload",
     "States": {
-      "Lambda Invoke": {
+      "System Overload": {
         "Type": "Task",
         "Resource": "arn:aws:states:::lambda:invoke",
         "OutputPath": "$.math_random",
@@ -21,15 +21,15 @@
             "BackoffRate": 2
           }
         ],
-        "Next": "Choice"
+        "Next": "System Overload Checker"
       },
-      "Choice": {
+      "System Overload Checker": {
         "Type": "Choice",
         "Choices": [
           {
             "Variable": "$.math_random",
             "NumericLessThan": 0.5,
-            "Next": "Wait"
+            "Next": "Wait 1 minute"
           },
           {
             "Variable": "$.math_random",
@@ -38,10 +38,10 @@
           }
         ]
       },
-      "Wait": {
+      "Wait 1 minute": {
         "Type": "Wait",
         "Seconds": 1,
-        "Next": "Lambda Invoke",
+        "Next": "System Overload",
         "Comment": "system overload wait for 1 second"
       },
       "API Gateway Invoke": {
@@ -59,7 +59,7 @@
               "HeaderValue3"
             ]
           },
-          "Stage": "MyStage",
+          "Stage": "prod",
           "Path": "/pets/dog/1",
           "QueryParameters": {
             "QueryParameter1": [
@@ -75,10 +75,30 @@
           },
           "AuthType": "IAM_ROLE"
         },
-        "Next": "Wait Lambda Invoke"
+        "Next": "Processing Checker"
       },
-      "Wait Lambda Invoke": {
-        "Type": "Task",
+      "Processing Checker": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.status",
+            "StringMatches": "success",
+            "Next": "handle success"
+          },
+          {
+            "Variable": "$.status",
+            "StringMatches": "failure",
+            "Next": "handle failure"
+          },
+          {
+            "Variable": "$.status",
+            "StringMatches": "in-progress",
+            "Next": "API Gateway Invoke"
+          }
+        ]
+      },
+      "handle success": {
+         "Type": "Task",
         "Resource": "arn:aws:states:::lambda:invoke",
         "OutputPath": "$.math_random",
         "Parameters": {
@@ -96,7 +116,28 @@
             "BackoffRate": 2
           }
         ],
-        "Next": "Lambda Invoke"
+        "End": true
+      },
+      "handle failure": {
+         "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "OutputPath": "$.math_random",
+        "Parameters": {
+          "Payload.$": "$"
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "End": true
       }
     }
   }
