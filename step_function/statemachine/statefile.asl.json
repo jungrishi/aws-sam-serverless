@@ -1,143 +1,91 @@
 {
-    "Comment": "A description of my state machine",
-    "StartAt": "System Overload",
-    "States": {
-      "System Overload": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "OutputPath": "$.math_random",
-        "Parameters": {
-          "Payload.$": "$"
+  "Comment": "Step function for getemails",
+  "StartAt": "CheckIfNewDatas",
+  "States": {
+    "CheckIfNewDatas": {
+      "Type": "Task",
+      "Resource": "${{ExtractDataHandlerArn}}",
+      "ResultPath": "$.result",
+      "Next": "isNewData"
+    },
+    "isNewData": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.result.continue",
+          "BooleanEquals": true,
+          "Next": "Iterator"
         },
-        "Retry": [
-          {
-            "ErrorEquals": [
-              "Lambda.ServiceException",
-              "Lambda.AWSLambdaException",
-              "Lambda.SdkClientException"
-            ],
-            "IntervalSeconds": 2,
-            "MaxAttempts": 6,
-            "BackoffRate": 2
+        {
+          "Variable": "$.result.done",
+          "BooleanEquals": true,
+          "Next": "Restart"
+        }
+      ],
+      "Default": "wait 1 second"
+    },
+    "Iterator": {
+      "Type": "Map",
+      "Next": "processedRecordChoice",
+      "Iterator": {
+        "StartAt": "ProcessRecords",
+        "States": {
+          "ProcessRecords": {
+            "Comment": "make an external api call and provide response",
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:ap-south-1:748865664014:function:get_new_data",
+            "ResultPath": "$.result",
+            "End": true
           }
-        ],
-        "Next": "System Overload Checker"
-      },
-      "System Overload Checker": {
-        "Type": "Choice",
-        "Choices": [
-          {
-            "Variable": "$.math_random",
-            "NumericLessThan": 0.5,
-            "Next": "Wait 1 minute"
-          },
-          {
-            "Variable": "$.math_random",
-            "NumericGreaterThanEquals": 0.5,
-            "Next": "API Gateway Invoke"
-          }
-        ]
-      },
-      "Wait 1 minute": {
-        "Type": "Wait",
-        "Seconds": 1,
-        "Next": "System Overload",
-        "Comment": "system overload wait for 1 second"
-      },
-      "API Gateway Invoke": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::apigateway:invoke",
-        "Parameters": {
-          "ApiEndpoint": "MyApiId.execute-api.us-east-1.amazonaws.com",
-          "Method": "POST",
-          "Headers": {
-            "Header1": [
-              "HeaderValue1"
-            ],
-            "Header2": [
-              "HeaderValue2",
-              "HeaderValue3"
-            ]
-          },
-          "Stage": "prod",
-          "Path": "/pets/dog/1",
-          "QueryParameters": {
-            "QueryParameter1": [
-              "QueryParameterValue1"
-            ],
-            "QueryParameter2": [
-              "QueryParameterValue2",
-              "QueryParameterValue3"
-            ]
-          },
-          "RequestBody": {
-            "Payload": "Hello from Step Functions!"
-          },
-          "AuthType": "IAM_ROLE"
-        },
-        "Next": "Processing Checker"
-      },
-      "Processing Checker": {
-        "Type": "Choice",
-        "Choices": [
-          {
-            "Variable": "$.status",
-            "StringMatches": "success",
-            "Next": "handle success"
-          },
-          {
-            "Variable": "$.status",
-            "StringMatches": "failure",
-            "Next": "handle failure"
-          },
-          {
-            "Variable": "$.status",
-            "StringMatches": "in-progress",
-            "Next": "API Gateway Invoke"
-          }
-        ]
-      },
-      "handle success": {
-         "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "OutputPath": "$.math_random",
-        "Parameters": {
-          "Payload.$": "$"
-        },
-        "Retry": [
-          {
-            "ErrorEquals": [
-              "Lambda.ServiceException",
-              "Lambda.AWSLambdaException",
-              "Lambda.SdkClientException"
-            ],
-            "IntervalSeconds": 2,
-            "MaxAttempts": 6,
-            "BackoffRate": 2
-          }
-        ],
-        "End": true
-      },
-      "handle failure": {
-         "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "OutputPath": "$.math_random",
-        "Parameters": {
-          "Payload.$": "$"
-        },
-        "Retry": [
-          {
-            "ErrorEquals": [
-              "Lambda.ServiceException",
-              "Lambda.AWSLambdaException",
-              "Lambda.SdkClientException"
-            ],
-            "IntervalSeconds": 2,
-            "MaxAttempts": 6,
-            "BackoffRate": 2
-          }
-        ],
-        "End": true
+        }
       }
+    },
+    "wait 1 second": {
+      "Type": "Wait",
+      "Seconds": 1,
+      "Next": "CheckIfNewDatas"
+    },
+    "processedRecordChoice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.result.status",
+          "StringEquals": "in_progress",
+          "Next": "Iterator"
+        },
+        {
+          "Variable": "$.restart.status",
+          "StringEquals": "success",
+          "Next": "Write emails to DynamoDB"
+        }
+      ],
+      "Default": "Restart"
+    },
+    "Write emails to DynamoDB": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Parameters": {
+        "TableName": "UsersDemo",
+        "Item": {
+          "pk": {
+            "S.$": "$.id"
+          },
+          "email_id": {
+            "S.$": "$.email"
+          }
+        }
+      },
+      "ResultPath": "$.dynamodbPut",
+      "Next": "Restart"
+    },
+    "Restart": {
+      "Type": "Task",
+      "Resource": "${{RestartHandlerArn}}",
+      "Next": "Done"
+    },
+    "Done": {
+      "Type": "Pass",
+      "End": true
     }
   }
+}

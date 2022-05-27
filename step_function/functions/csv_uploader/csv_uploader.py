@@ -43,4 +43,7 @@ def lambda_handler(event, context):
     if len(rows) < 10:
         return make_response_obj("records should greater or equal to 10", 400)
 
+    # imput file in a table
+    # input content with file id in records table
+
     return make_response_obj(f'Hello from Lambda! {rows}')

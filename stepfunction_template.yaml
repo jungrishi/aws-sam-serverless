@@ -8,7 +8,7 @@ Resources:
     Properties:
       CompatibleRuntimes:
         - python3.8
-      ContentUri: step_function/functions/csv_uploader/layer
+      ContentUri: step_function/functions/layer
       Description: Provides the base backend shared library and dependencies
       LayerName: stepfunction-python-layer
 
@@ -20,7 +20,7 @@ Resources:
       BinaryMediaTypes:
         - "multipart/form-data"
 
-  LambdaHandler:
+  CSVUploaderLambdaHandler:
     Type: AWS::Serverless::Function
     Properties:
       Handler: csv_uploader.lambda_handler
@@ -38,6 +38,31 @@ Resources:
             RestApiId: !Ref StepFunctionSAMApiGatewayCodingChallenge
             Path: /csv-uploader
             Method: POST
+    
+  RestartLambdaHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: restart_lambda.lambda_handler
+      Runtime: python3.8
+      CodeUri: step_function/functions/restartLambda
+      Description: Restarts step function execution
+      MemorySize: 128
+      Timeout: 30
+      # Policies:
+      #   - StepFunctionsExecutionPolicy:
+      #       StateMachineName: !GetAtt StateMachine.Name
+
+  ExtractDataLambdaHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: restart.lambda_handler
+      Runtime: python3.8
+      CodeUri: step_function/functions/extract_unprocessed_data
+      Description: fetch unprocessed new data
+      MemorySize: 128
+      Timeout: 30
+      Layers: 
+        - !Ref StepFunctionPythonLayer
 
   StateMachineIAMRole:
     Type: AWS::IAM::Role
@@ -62,53 +87,15 @@ Resources:
                 Effect: "Allow"
                 Action: "lambda:InvokeFunction"
                 Resource:
-                  - !GetAtt TestFunction1.Arn
-                  - !GetAtt TestFunction2.Arn
+                  - !GetAtt ExtractDataLambdaHandler.Arn
+                  - !GetAtt RestartLambdaHandler.Arn
 
-  StateMachine:
-    Type: AWS::StepFunctions::StateMachine
+  GetEmailsStateMachine:
+    Type: AWS::Serverless::StateMachine
     Properties:
-      StateMachineName: !Sub "${AWS::StackName}-StateMachine"
-      RoleArn: !GetAtt StateMachineIAMRole.Arn
-      DefinitionUri: step_function/statemachine/my_state_machine.asl.json
+      Type: EXPRESS
+      Role: !GetAtt StateMachineIAMRole.Arn
+      DefinitionUri: step_function/statemachine/statefile.asl.json
       DefinitionSubstitutions:
-        MyFunctionArn: !GetAtt MyFunction.Arn
-        MyDDBTable: !Ref TransactionTable
-        MyCsvProcessorAPI: !Ref
-
- ScheduledEventIAMRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Effect: "Allow"
-            Principal:
-              Service:
-                  - Fn::Sub: "events.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      Policies:
-        -
-          PolicyName: StateMachineExecutionPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              -
-                Effect: "Allow"
-                Action: "states:StartExecution"
-                Resource:
-                  - !Ref StateMachine
-
-  ScheduledEventRule:
-    Type: "AWS::Events::Rule"
-    Properties:
-      Description: "Scheduled event to trigger Step Functions state machine every 5 minutes"
-      ScheduleExpression: rate(5 minute)
-      State: "ENABLED"
-      Targets:
-        -
-          Arn: !Ref StateMachine
-          Id: !GetAtt StateMachine.Name
-          RoleArn: !GetAtt ScheduledEventIAMRole.Arn
+        RestartHandlerArn: !GetAtt RestartLambdaHandler.Arn
+        ExtractDataHandlerArn: !GetAtt ExtractDataLambdaHandler.Arn
