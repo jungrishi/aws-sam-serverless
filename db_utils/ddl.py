@@ -21,3 +21,5 @@ def create_required_tables():
         on users (id);
 
        '''
+
+    return {"users": create_user_table_query}

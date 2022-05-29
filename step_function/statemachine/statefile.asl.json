@@ -5,6 +5,16 @@
     "CheckIfNewDatas": {
       "Type": "Task",
       "Resource": "${{ExtractDataHandlerArn}}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 3,
+          "MaxAttempts": 5,
+          "BackoffRate": 1.5
+        }
+      ],
       "ResultPath": "$.result",
       "Next": "isNewData"
     },
@@ -34,6 +44,16 @@
             "Comment": "make an external api call and provide response",
             "Type": "Task",
             "Resource": "arn:aws:lambda:ap-south-1:748865664014:function:get_new_data",
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "States.ALL"
+                ],
+                "IntervalSeconds": 3,
+                "MaxAttempts": 5,
+                "BackoffRate": 1.5
+              }
+            ],
             "ResultPath": "$.result",
             "End": true
           }
@@ -81,6 +101,16 @@
     "Restart": {
       "Type": "Task",
       "Resource": "${{RestartHandlerArn}}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 3,
+          "MaxAttempts": 5,
+          "BackoffRate": 1.5
+        }
+      ],
       "Next": "Done"
     },
     "Done": {

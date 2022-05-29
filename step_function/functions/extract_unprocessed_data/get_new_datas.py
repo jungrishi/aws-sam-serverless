@@ -13,29 +13,7 @@ def lambda_handler(event, context):
         }
 
     # get data from db
-
-    datas = [
-        {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lftechnology", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-            {"firstname": "rishi", "lastname": "ranabhat", "company_name": "lf", "domain": "com"},
-    ]
+    datas = get_records_from_db()
 
     if len(datas) < MIN_DATA_LEN:
         return {
