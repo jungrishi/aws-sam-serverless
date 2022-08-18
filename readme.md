@@ -1,7 +1,3 @@
-# Getemails Task
-[Backend Developer - Task.pdf](https://github.com/jungrishi/aws-sam-serverless/files/9125136/Backend.Developer.-.Task.pdf)
-
-
 The Lambda function has a monolithic architecture where Forgot password and reset password HTTP endpoints are branched based on the Resource PATH and the HTTP method.
  
 ## Forgot Password
