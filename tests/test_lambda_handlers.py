@@ -1,6 +1,6 @@
 import json
-from integ_test.utils.fixtures import *
-from src.forgot_password import forgot_password_handler
+from tests.utils.fixtures import *
+from password_manager.forgot_password import forgot_password_handler
 
 test_params = [
     ("123.com", {"response": "user not found", "status": 404}),

@@ -4,6 +4,13 @@ from utils import JWTException
 
 ALGORITHM = "HS256"
 
+def is_valid_token(token: str, secret: str) -> bool:
+    payload = jwt_decode_token(token, secret)
+    if payload:
+        return True
+    return False
+
+
 def jwt_decode_token(token: str, secret: str) -> dict:
     """
     Return the payload of the token
