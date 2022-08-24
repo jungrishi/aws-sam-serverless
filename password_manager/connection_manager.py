@@ -1,7 +1,11 @@
 import os
-from typing import List
+from typing import Iterable, List
 import psycopg2
 from psycopg2.extras import DictCursor
+
+from password_manager.logger_utils import get_logger
+
+logger = get_logger()
 
 #  TODO: get the config from the env
 db_config = {
@@ -21,43 +25,52 @@ def get_connection():
         port=db_config["port"],
     )
 
-def fetch_data(query):
-    # Note: connection pool
-    connection = get_connection()
+def fetch_one(query: str, params: list) -> dict:
+    """fetch single record from the database.
+    
+    Connects to database and executes the query to return a single record. 
 
+    Args:
+        query (str): SQL to execute.
+        values (str): values to filter.
+    """
+    connection = get_connection()
     try:
         with connection.cursor(cursor_factory=DictCursor) as cur:
-            cur.execute(query)
-            result = cur.fetchall()
-            return to_dict(result)
+            cur.execute(query, params)
+            breakpoint()
+            result_set = cur.fetchone()
+            to_dict(result_set)
 
-    except Exception as error:
-        print(error)
-        return []
+    except psycopg2.OperationalError as Operror:
+        connection.rollback()
+        logger.exception("Database error")
+        raise
+    finally:
+        connection.close()
 
-def insert_data(query, payload):
-    connection = get_connection()
+def write_to_db(query: str, values: tuple):
+        """Execute and commit query interpolating the values.
+        Args:
+            query (str): SQL to execute.
+            values (str): values to write.
+        """
+        connection = get_connection()
+        try:
+            with connection.cursor() as cur:
+                cur.execute(query, values)
+                connection.commit()
+                return
+        except psycopg2.Error:
+            connection.rollback()
+            logger.exception("Database error")
+            raise
+        finally:
+            connection.close()
 
-    try:
-        with connection.cursor(cursor_factory=DictCursor) as cur:
-            cur.execute(query, payload)
-            connection.commit()
-            return True
-
-    except Exception as error:
-        print(error)
-        return False
-
-def to_dict(result) -> List:
+def to_dict(result: Iterable) -> dict:
     """Returns a list
 
     Converts the db result to corresponding key(column_name) value(column_value) pair
     """
-    arr = []
-    for x in result:
-        obj={}
-        for k, v in x.items():
-            obj[k] = v
-        arr.append(obj)
-
-    return arr
+    return [{k: v} for k, v in result.items()][0]
