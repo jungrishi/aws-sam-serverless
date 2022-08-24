@@ -6,13 +6,13 @@ def get_ses_client():
 
 def send_email_via_ses(client: boto3.client, email_config: dict) -> None:
     try:
-        RECIPENTS = email_config["to"]
-        SENDER = email_config["from"]
+        recipients = email_config["to"]
+        sender = email_config["from"]
         client.send_email(
             Destination={
-                "ToAddresses": RECIPENTS,
+                "ToAddresses": recipients,
             },
-            Source=SENDER,
+            Source=sender,
             Template="PasswordResetLink"
         )
 

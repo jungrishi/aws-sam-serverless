@@ -27,12 +27,16 @@ def jwt_decode_token(token: str, secret: str) -> dict:
         err_message = str(err)
         raise JWTException(f"{err_message}")
 
-def jwt_generate_token(payload: dict, secret: str) -> str:
+def jwt_generate_token(payload: dict, secret: str, algorithm: str = ALGORITHM) -> str:
     """
     Generates a unique token for the given payload and secret
+    Args:
+        payload (dict): data to encode
+        secret (str): 
+        algorithm (str): 
     """
     try:
-        return jwt.encode(payload, secret, algorithm=ALGORITHM)
+        return jwt.encode(payload, secret, algorithm=algorithm)
     except Exception as err:
         print(err)
         return None

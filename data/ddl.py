@@ -13,7 +13,7 @@ def create_required_tables():
                 created_at timestamp default now() not null,
                 updated_at timestamp default now() not null,
                 username               varchar(255),
-                password_hash          varchar(255),
+                password_hash          text,
                 reset_link_timestamp   timestamp with time zone
             );
 
