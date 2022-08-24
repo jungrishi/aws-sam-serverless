@@ -1,15 +1,17 @@
 from datetime import datetime, timezone, timedelta
-import json
+
 from jwt_utils import jwt_generate_token
 from email_utils import get_ses_client, send_email_via_ses
-
 from utils import make_response_obj
 from db_models import get_user_by_email, update_user_reset_time
+from password_manager.logger_utils import get_logger
+
+logger = get_logger()
 
 DOMIAN_URL = "https://www.getemails.io"
 def forgot_password_handler(event, context):
     # forget password handler ...
-    print("Executing forget password lambda handler ...")
+    logger.info("Executing forget password lambda handler ...")
 
     epoch_timestamp_now = datetime.now(tz=timezone.utc)
     expire_timestamp_epoch = epoch_timestamp_now + timedelta(days=2)
@@ -20,7 +22,6 @@ def forgot_password_handler(event, context):
     if not user_email:
         return make_response_obj("email not found", 400)
     
-    # TODO: setup RDS and seed some user data
     user = get_user_by_email(user_email)
 
     if not user:
@@ -48,5 +49,3 @@ def forgot_password_handler(event, context):
     send_email_via_ses(get_ses_client(), email_config)
     update_user_reset_time(user['id'], epoch_timestamp_now)
     return make_response_obj(f"Email send password reset link. token: {reset_link}")
-
-# print(forgot_password_handler({}, {}))
