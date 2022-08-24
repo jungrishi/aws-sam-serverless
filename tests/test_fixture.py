@@ -1,5 +1,5 @@
 import pytest
-from integ_test.utils.fixtures import parse_connection_str
+from tests.utils.fixtures import parse_connection_str
 
 
 def test_parse_connection_str():

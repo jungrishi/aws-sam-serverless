@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 
-from jwt_utils import jwt_generate_token
+from jwt_utils import encode
 from email_utils import get_ses_client, send_email_via_ses
 from utils import make_response_obj
 from db_models import get_user_by_email, update_user_reset_time
@@ -34,7 +34,7 @@ def forgot_password_handler(event, context):
     # epoch timestamp makes JWT generate unique token when same user makes request multiple times
     secret = f"{user['password_hash']}-{epoch_timestamp_now}"
     
-    encoded_token = jwt_generate_token(payload, secret)
+    encoded_token = encode(payload, secret)
 
     if not encoded_token:
         return make_response_obj("cannot generate reset link", 500)

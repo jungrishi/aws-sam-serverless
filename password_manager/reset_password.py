@@ -1,5 +1,5 @@
 from db_models import get_user_by_id
-from jwt_utils import jwt_decode_token
+from jwt_utils import decode
 from utils import JWTException, make_response_obj
 
 from password_manager.logger_utils import get_logger
@@ -21,7 +21,7 @@ def password_reset_view_handler(event, context):
     secret = f"{user['password_hash']}-{user['reset_link_timestamp']}"
 
     try:
-        jwt_decode_token(token, secret)
+        decode(token, secret)
         return make_response_obj("Valid token, Render reset password page", 200)
     except JWTException as err:
         return make_response_obj(str(err), 400)

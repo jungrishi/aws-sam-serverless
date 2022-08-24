@@ -69,8 +69,8 @@ def write_to_db(query: str, values: tuple):
             connection.close()
 
 def to_dict(result: Iterable) -> dict:
-    """Returns a list
+    """Returns a list.
 
-    Converts the db result to corresponding key(column_name) value(column_value) pair
+    Converts the db result to corresponding key(column_name) value(column_value) pair.
     """
     return [{k: v} for k, v in result.items()][0]
