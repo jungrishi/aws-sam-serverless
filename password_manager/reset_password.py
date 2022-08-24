@@ -2,8 +2,12 @@ from db_models import get_user_by_id
 from jwt_utils import jwt_decode_token
 from utils import JWTException, make_response_obj
 
+from password_manager.logger_utils import get_logger
+
+logger = get_logger()
+
 def password_reset_view_handler(event, context):
-    print("Reset password lambda handler ...")
+    logger.info("Reset password lambda handler ...")
 
     token = event['pathParameters']['token']
     user_id = event['pathParameters']['user_id']
